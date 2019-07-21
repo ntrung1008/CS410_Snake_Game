@@ -9,6 +9,7 @@ use piston::input::*;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{ GlGraphics, OpenGL };
 
+
 #[derive(Clone,PartialEq)]
 enum Direction {
 	Right,Left,Up,Down
@@ -17,6 +18,7 @@ pub struct Game
 {
     gl: GlGraphics,
 	snake: Snake, 
+	food : Food,
 }
 impl Game {
     fn render(&mut self, args: &RenderArgs) {
@@ -29,6 +31,7 @@ impl Game {
             clear(GREEN, gl);  
         });
 		self.snake.render(&mut self.gl, args);
+		self.food.render(&mut self.gl, args);
     }
 	fn update( &mut self){
 		self.snake.update();
@@ -47,6 +50,23 @@ impl Game {
 				if current_direction != Direction::Left => Direction::Right,
 			_ => current_direction,
 		};
+	}
+}
+struct Food {
+	x:i32,
+	y:i32,
+}
+impl Food{
+	fn render(&self,gl: &mut GlGraphics, args:&RenderArgs)
+	{
+		use graphics;
+		const RED:   [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+        let ellipse = graphics::rectangle::square((self.x *20) as f64, (self.y*20) as f64, 20_f64);
+		gl.draw(args.viewport(),|c,gl|
+		{
+			let transform = c.transform;
+			graphics::ellipse(RED,ellipse,transform,gl);
+		})
 	}
 }
 struct Snake {
@@ -92,6 +112,7 @@ fn main() {
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
 		snake: Snake{x:0,y:0, dir: Direction :: Right},
+		food :Food {x :1, y:1}
 	};	
 	
 	let mut events = Events::new(EventSettings::new()).ups(10);
