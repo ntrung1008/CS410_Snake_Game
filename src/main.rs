@@ -21,6 +21,7 @@ pub struct Game
     gl: GlGraphics,
 	snake: Snake, 
 	food : Food,
+	ate_food:bool,
 }
 impl Game {
     fn render(&mut self, args: &RenderArgs) {
@@ -37,6 +38,13 @@ impl Game {
     }
 	fn update( &mut self){
 		self.snake.update();
+		self.ate_food = self.food.got_eaten(&self.snake);
+		if self.ate_food== true
+		{
+			let mut rng = rand::thread_rng();
+			self.food= Food{x:rng.gen_range(0,20),y:rng.gen_range(0,20)};
+			self.ate_food=false;
+		}
 	}
 	fn pressed(&mut self, btn :& Button){
 		let current_direction = self.snake.dir.clone();
@@ -70,6 +78,12 @@ impl Food{
 			graphics::ellipse(RED,ellipse,transform,gl);
 		})
 	}
+	fn got_eaten (& mut self, snake: &Snake) ->bool
+	{
+		if snake.x == self. x && snake.y == self.y
+		{	return true;}
+		return false;
+	}
 }
 struct Snake {
 	x :i32,
@@ -90,12 +104,18 @@ impl Snake{
 	}
 	fn update (&mut self)
 	{
+		if (self.x <0 ) {self.x=20}
+		if (self.x >20 ) {self.x=0}
+		if (self.y <0 ) {self.y=20}
+		if (self.y >20 ) {self.y=0}
+		
 		match self.dir {
-			Direction::Left  => if (self.x ==0 ) {self.x=20} else {self.x -=1},//if snake goes outside of screen, redraw it on the other side
+			Direction::Left  => if (self.x <0 ) {self.x=20} else {self.x -=1},//if snake goes outside of screen, redraw it on the other side
 			Direction::Right => if (self.x >20 ) {self.x=0} else {self.x +=1},
-			Direction::Up    => if (self.y ==0 ) {self.y=20} else {self.y -=1},
+			Direction::Up    => if (self.y <0 ) {self.y=20} else {self.y -=1},
 			Direction::Down  => if (self.y >20 ) {self.y=0} else {self.y +=1},
 		}
+		
 	}
 }
 fn main() {
@@ -115,7 +135,8 @@ fn main() {
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
 		snake: Snake{x:0,y:0, dir: Direction :: Right},
-		food :Food {x :rng.gen_range(0, 20), y:rng.gen_range(0, 20)}
+		food :Food {x :rng.gen_range(0, 20), y:rng.gen_range(0, 20)},
+		ate_food:false,
 	};	
 	
 	let mut events = Events::new(EventSettings::new()).ups(5);//how often to update
