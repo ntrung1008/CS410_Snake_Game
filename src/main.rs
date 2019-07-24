@@ -2,12 +2,14 @@ extern crate piston;
 extern crate graphics;
 extern crate glutin_window;
 extern crate opengl_graphics;
+extern crate rand;
 
 use piston::window::WindowSettings;
 use piston::event_loop::*;
 use piston::input::*;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{ GlGraphics, OpenGL };
+use rand::Rng;
 
 
 #[derive(Clone,PartialEq)]
@@ -89,10 +91,10 @@ impl Snake{
 	fn update (&mut self)
 	{
 		match self.dir {
-			Direction::Left  => self.x -=1,
-			Direction::Right => self.x +=1,
-			Direction::Up    => self.y -=1,
-			Direction::Down  => self.y +=1,
+			Direction::Left  => if (self.x ==0 ) {self.x=20} else {self.x -=1},//if snake goes outside of screen, redraw it on the other side
+			Direction::Right => if (self.x >20 ) {self.x=0} else {self.x +=1},
+			Direction::Up    => if (self.y ==0 ) {self.y=20} else {self.y -=1},
+			Direction::Down  => if (self.y >20 ) {self.y=0} else {self.y +=1},
 		}
 	}
 }
@@ -103,19 +105,20 @@ fn main() {
     // Create an Glutin window.
     let mut window: Window = WindowSettings::new(
             "Snake",
-            [200, 200]
+            [400, 400]
         )
         .graphics_api(opengl)
         .exit_on_esc(true)
         .build()
         .unwrap();
+	let mut rng = rand::thread_rng();
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
 		snake: Snake{x:0,y:0, dir: Direction :: Right},
-		food :Food {x :1, y:1}
+		food :Food {x :rng.gen_range(0, 20), y:rng.gen_range(0, 20)}
 	};	
 	
-	let mut events = Events::new(EventSettings::new()).ups(10);
+	let mut events = Events::new(EventSettings::new()).ups(5);//how often to update
     while let Some(e) = events.next(&mut window) {
         if let Some(r) = e.render_args() {
             game.render(&r);
