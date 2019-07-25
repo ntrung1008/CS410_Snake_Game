@@ -150,6 +150,7 @@ impl Snake{
                                     if !eaten {self.snek.remove(0);}
                                 },
 		}
+		
 	}
 }
 
