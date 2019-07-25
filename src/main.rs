@@ -41,13 +41,8 @@ impl Game {
 		self.food.render(&mut self.gl, args);
     }
 	fn update( &mut self){
-<<<<<<< HEAD
 		self.ate_food = self.food.got_eaten(&self.snake);
 		self.snake.update(self.ate_food);
-=======
-		self.snake.update();
-		self.ate_food = self.food.got_eaten(&self.snake);
->>>>>>> refs/remotes/origin/master
 		if self.ate_food== true
 		{
 			let mut rng = rand::thread_rng();
@@ -91,7 +86,6 @@ impl Food{
 	}
 	fn got_eaten (& mut self, snake: &Snake) ->bool
 	{
-<<<<<<< HEAD
         let mut head = (0,0);
         // Get snek head
         match snake.snek.last() {
@@ -99,9 +93,6 @@ impl Food{
             None    => panic!("snek length 0"),
         }
 		if head.0 == self.x && head.1 == self.y
-=======
-		if snake.x == self. x && snake.y == self.y
->>>>>>> refs/remotes/origin/master
 		{	return true;}
 		return false;
 	}
@@ -130,7 +121,6 @@ impl Snake{
 
 	fn update (&mut self, eaten: bool)
 	{
-<<<<<<< HEAD
         let mut head = (0,0);
         // Get snek head
         match self.snek.last() {
@@ -159,18 +149,6 @@ impl Snake{
                                     self.snek.push((head.0,head.1+1));
                                     if !eaten {self.snek.remove(0);}
                                 },
-=======
-		if (self.x <0 ) {self.x=20}
-		if (self.x >20 ) {self.x=0}
-		if (self.y <0 ) {self.y=20}
-		if (self.y >20 ) {self.y=0}
-		
-		match self.dir {
-			Direction::Left  => if (self.x <0 ) {self.x=20} else {self.x -=1},//if snake goes outside of screen, redraw it on the other side
-			Direction::Right => if (self.x >20 ) {self.x=0} else {self.x +=1},
-			Direction::Up    => if (self.y <0 ) {self.y=20} else {self.y -=1},
-			Direction::Down  => if (self.y >20 ) {self.y=0} else {self.y +=1},
->>>>>>> refs/remotes/origin/master
 		}
 		
 	}
@@ -192,11 +170,7 @@ fn main() {
 	let mut rng = rand::thread_rng();
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
-<<<<<<< HEAD
 		snake: Snake{snek: vec![(5,5),(5,6),(6,6),(6,7)], dir: Direction :: Right, alive: true},
-=======
-		snake: Snake{x:0,y:0, dir: Direction :: Right},
->>>>>>> refs/remotes/origin/master
 		food :Food {x :rng.gen_range(0, 20), y:rng.gen_range(0, 20)},
 		ate_food:false,
 	};	
