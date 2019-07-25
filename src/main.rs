@@ -16,12 +16,14 @@ use rand::Rng;
 enum Direction {
 	Right,Left,Up,Down
 }
+
 pub struct Game 
 {
-    gl: GlGraphics,
-	snake: Snake, 
-	food : Food,
+    gl    :GlGraphics,
+	snake :Snake, 
+	food  :Food,
 }
+
 impl Game {
     fn render(&mut self, args: &RenderArgs) {
         use graphics::*;
@@ -54,10 +56,12 @@ impl Game {
 		};
 	}
 }
+
 struct Food {
 	x:i32,
 	y:i32,
 }
+
 impl Food{
 	fn render(&self,gl: &mut GlGraphics, args:&RenderArgs)
 	{
@@ -71,33 +75,66 @@ impl Food{
 		})
 	}
 }
+
 struct Snake {
-	x :i32,
-	y :i32,
-	dir :Direction,
+    // deprecated
+	// x    :i32,
+	// y    :i32,
+    snek  :Vec<(i32, i32)>,
+	dir   :Direction,
+    alive :bool,
 }
+
 impl Snake{
 	fn render(&self,gl: &mut GlGraphics, args:&RenderArgs)
 	{
 		use graphics;
 		const RED:   [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-        let square = graphics::rectangle::square((self.x *20) as f64, (self.y*20) as f64, 20_f64);
 		gl.draw(args.viewport(),|c,gl|
 		{
 			let transform = c.transform;
-			graphics::rectangle(RED,square,transform,gl);
+            for piece in &self.snek {
+                let square = graphics::rectangle::square((piece.0*20) as f64, (piece.1*20) as f64, 20_f64);
+			    graphics::rectangle(RED,square,transform,gl);
+            }
 		})
 	}
+
 	fn update (&mut self)
 	{
+        let mut head = (0,0);
+        // Get snek head
+        match self.snek.last() {
+            Some(s) => head = *s,
+            None    => panic!("snek length 0"),
+        }
+        println!("{}",self.snek.len());
+        // Check for death by wall
 		match self.dir {
-			Direction::Left  => if (self.x ==0 ) {self.x=20} else {self.x -=1},//if snake goes outside of screen, redraw it on the other side
-			Direction::Right => if (self.x >20 ) {self.x=0} else {self.x +=1},
-			Direction::Up    => if (self.y ==0 ) {self.y=20} else {self.y -=1},
-			Direction::Down  => if (self.y >20 ) {self.y=0} else {self.y +=1},
+			Direction::Left  => if head.0 == 0 {self.alive = false}
+                                else {
+                                    self.snek.push((head.0-1,head.1));
+                                    self.snek.remove(0);
+                                },
+			Direction::Right => if head.0 > 20 {self.alive = false}
+                                else {
+                                    self.snek.push((head.0+1,head.1));
+                                    self.snek.remove(0);
+                                },
+			Direction::Up    => if head.1 == 0 {self.alive = false}
+                                else {
+                                    self.snek.push((head.0,head.1-1));
+                                    self.snek.remove(0);
+                                },
+			Direction::Down  => if head.1 > 20 {self.alive = false}
+                                else {
+                                    self.snek.push((head.0,head.1+1));
+                                    self.snek.remove(0);
+                                },
 		}
 	}
 }
+
 fn main() {
     // Change this to OpenGL::V2_1 if not working.
     let opengl = OpenGL::V3_2;
@@ -114,7 +151,7 @@ fn main() {
 	let mut rng = rand::thread_rng();
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
-		snake: Snake{x:0,y:0, dir: Direction :: Right},
+		snake: Snake{snek: vec![(5,5),(5,6),(6,6),(6,7)], dir: Direction :: Right, alive: true},
 		food :Food {x :rng.gen_range(0, 20), y:rng.gen_range(0, 20)}
 	};	
 	
@@ -126,7 +163,10 @@ fn main() {
 		
 		if let Some(u) = e.update_args() {
 			game.update();
-		}
+            if !game.snake.alive {
+                break;
+		    }
+        }
 		
 		if let Some(key) = e.button_args(){
 			game.pressed(&key.button);
