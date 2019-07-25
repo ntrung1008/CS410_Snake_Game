@@ -17,7 +17,7 @@ enum Direction {
 	Right,Left,Up,Down
 }
 
-static WINDOWSIZE = (1000,1000);
+static WINDOWSIZE : (u32,u32)=(1000,1000);
 
 pub struct Game 
 {
@@ -68,8 +68,8 @@ impl Game {
 }
 
 struct Food {
-	x:i32,
-	y:i32,
+	x:u32,
+	y:u32,
 }
 
 impl Food{
@@ -99,7 +99,7 @@ impl Food{
 }
 
 struct Snake {
-    snek  :Vec<(i32, i32)>,
+    snek  :Vec<(u32, u32)>,
 	dir   :Direction,
     alive :bool,
 }
@@ -121,7 +121,7 @@ impl Snake{
 
 	fn update (&mut self, eaten: bool)
 	{
-        let mut head = (0,0);
+        let mut head: (u32,u32) = (0,0);
         // Get snek head
         match self.snek.last() {
             Some(s) => head = *s,
@@ -134,7 +134,7 @@ impl Snake{
                                     self.snek.push((head.0-1,head.1));
                                     if !eaten {self.snek.remove(0);}
                                 },
-			Direction::Right => if head.0 > 20 {self.alive = false}
+			Direction::Right => if head.0 > WINDOWSIZE.0/20 {self.alive = false}
                                 else {
                                     self.snek.push((head.0+1,head.1));
                                     if !eaten {self.snek.remove(0);}
@@ -144,7 +144,7 @@ impl Snake{
                                     self.snek.push((head.0,head.1-1));
                                     if !eaten {self.snek.remove(0);}
                                 },
-			Direction::Down  => if head.1 > 20 {self.alive = false}
+			Direction::Down  => if head.1 > WINDOWSIZE.1/20  {self.alive = false}
                                 else {
                                     self.snek.push((head.0,head.1+1));
                                     if !eaten {self.snek.remove(0);}
@@ -161,7 +161,7 @@ fn main() {
     // Create an Glutin window.
     let mut window: Window = WindowSettings::new(
             "Snake",
-            [1000, 1000]
+            WINDOWSIZE
         )
         .graphics_api(opengl)
         .exit_on_esc(true)
@@ -171,11 +171,11 @@ fn main() {
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
 		snake: Snake{snek: vec![(5,5),(5,6),(6,6),(6,7)], dir: Direction :: Right, alive: true},
-		food :Food {x :rng.gen_range(0, 20), y:rng.gen_range(0, 20)},
+		food :Food {x :rng.gen_range(0, WINDOWSIZE.0/20 ), y:rng.gen_range(0, WINDOWSIZE.1/20 )},
 		ate_food:false,
 	};	
 	
-	let mut events = Events::new(EventSettings::new()).ups(5);//how often to update
+	let mut events = Events::new(EventSettings::new()).ups(30);//how often to update
     while let Some(e) = events.next(&mut window) {
         if let Some(r) = e.render_args() {
             game.render(&r);
