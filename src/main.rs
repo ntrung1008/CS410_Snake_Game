@@ -17,11 +17,14 @@ enum Direction {
 	Right,Left,Up,Down
 }
 
+static WINDOWSIZE = (1000,1000);
+
 pub struct Game 
 {
-    gl    :GlGraphics,
-	snake :Snake, 
-	food  :Food,
+    gl: GlGraphics,
+	snake: Snake, 
+	food : Food,
+	ate_food:bool,
 }
 
 impl Game {
@@ -38,7 +41,14 @@ impl Game {
 		self.food.render(&mut self.gl, args);
     }
 	fn update( &mut self){
-		self.snake.update();
+		self.ate_food = self.food.got_eaten(&self.snake);
+		self.snake.update(self.ate_food);
+		if self.ate_food== true
+		{
+			let mut rng = rand::thread_rng();
+			self.food= Food{x:rng.gen_range(0,20),y:rng.gen_range(0,20)};
+			self.ate_food=false;
+		}
 	}
 	fn pressed(&mut self, btn :& Button){
 		let current_direction = self.snake.dir.clone();
@@ -74,12 +84,21 @@ impl Food{
 			graphics::ellipse(RED,ellipse,transform,gl);
 		})
 	}
+	fn got_eaten (& mut self, snake: &Snake) ->bool
+	{
+        let mut head = (0,0);
+        // Get snek head
+        match snake.snek.last() {
+            Some(s) => head = *s,
+            None    => panic!("snek length 0"),
+        }
+		if head.0 == self.x && head.1 == self.y
+		{	return true;}
+		return false;
+	}
 }
 
 struct Snake {
-    // deprecated
-	// x    :i32,
-	// y    :i32,
     snek  :Vec<(i32, i32)>,
 	dir   :Direction,
     alive :bool,
@@ -100,7 +119,7 @@ impl Snake{
 		})
 	}
 
-	fn update (&mut self)
+	fn update (&mut self, eaten: bool)
 	{
         let mut head = (0,0);
         // Get snek head
@@ -108,28 +127,27 @@ impl Snake{
             Some(s) => head = *s,
             None    => panic!("snek length 0"),
         }
-        println!("{}",self.snek.len());
         // Check for death by wall
 		match self.dir {
 			Direction::Left  => if head.0 == 0 {self.alive = false}
                                 else {
                                     self.snek.push((head.0-1,head.1));
-                                    self.snek.remove(0);
+                                    if !eaten {self.snek.remove(0);}
                                 },
 			Direction::Right => if head.0 > 20 {self.alive = false}
                                 else {
                                     self.snek.push((head.0+1,head.1));
-                                    self.snek.remove(0);
+                                    if !eaten {self.snek.remove(0);}
                                 },
 			Direction::Up    => if head.1 == 0 {self.alive = false}
                                 else {
                                     self.snek.push((head.0,head.1-1));
-                                    self.snek.remove(0);
+                                    if !eaten {self.snek.remove(0);}
                                 },
 			Direction::Down  => if head.1 > 20 {self.alive = false}
                                 else {
                                     self.snek.push((head.0,head.1+1));
-                                    self.snek.remove(0);
+                                    if !eaten {self.snek.remove(0);}
                                 },
 		}
 	}
@@ -142,7 +160,7 @@ fn main() {
     // Create an Glutin window.
     let mut window: Window = WindowSettings::new(
             "Snake",
-            [400, 400]
+            [1000, 1000]
         )
         .graphics_api(opengl)
         .exit_on_esc(true)
@@ -152,7 +170,8 @@ fn main() {
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
 		snake: Snake{snek: vec![(5,5),(5,6),(6,6),(6,7)], dir: Direction :: Right, alive: true},
-		food :Food {x :rng.gen_range(0, 20), y:rng.gen_range(0, 20)}
+		food :Food {x :rng.gen_range(0, 20), y:rng.gen_range(0, 20)},
+		ate_food:false,
 	};	
 	
 	let mut events = Events::new(EventSettings::new()).ups(5);//how often to update
