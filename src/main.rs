@@ -86,7 +86,7 @@ impl Food{
 	}
 	fn got_eaten (& mut self, snake: &Snake) ->bool
 	{
-        let mut head = (0,0);
+        let head: (u32, u32);
         // Get snek head
         match snake.snek.last() {
             Some(s) => head = *s,
@@ -121,7 +121,8 @@ impl Snake{
 
 	fn update (&mut self, eaten: bool)
 	{
-        let mut head: (u32,u32) = (0,0);
+        let head: (u32,u32);
+		let mut next: (u32,u32) = (0,0);
         // Get snek head
         match self.snek.last() {
             Some(s) => head = *s,
@@ -131,26 +132,24 @@ impl Snake{
 		match self.dir {
 			Direction::Left  => if head.0 == 0 {self.alive = false}
                                 else {
-                                    self.snek.push((head.0-1,head.1));
-                                    if !eaten {self.snek.remove(0);}
+									next = (head.0-1,head.1);
                                 },
 			Direction::Right => if head.0 >= WINDOWSIZE.0/20-1 {self.alive = false}
                                 else {
-                                    self.snek.push((head.0+1,head.1));
-                                    if !eaten {self.snek.remove(0);}
+									next = (head.0+1,head.1);
                                 },
 			Direction::Up    => if head.1 == 0 {self.alive = false}
                                 else {
-                                    self.snek.push((head.0,head.1-1));
-                                    if !eaten {self.snek.remove(0);}
+									next = (head.0,head.1-1);
                                 },
-			Direction::Down  => if head.1 >= WINDOWSIZE.1/20-1  {self.alive = false}
+			Direction::Down  => if head.1 >= WINDOWSIZE.1/20-1 {self.alive = false}
                                 else {
-                                    self.snek.push((head.0,head.1+1));
-                                    if !eaten {self.snek.remove(0);}
+									next = (head.0,head.1+1);
                                 },
 		}
-		
+		if self.snek.contains(&next) {self.alive = false}
+        self.snek.push(next);
+        if !eaten {self.snek.remove(0);}
 	}
 }
 
@@ -170,7 +169,7 @@ fn main() {
 	let mut rng = rand::thread_rng();
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
-		snake: Snake{snek: vec![(5,5),(5,6),(6,6),(6,7)], dir: Direction :: Right, alive: true},
+		snake: Snake{snek: vec![(5,5),(5,6),(6,6),(6,7),(7,7),(8,7),(8,8)], dir: Direction :: Right, alive: true},
 		food :Food {x :rng.gen_range(0, (WINDOWSIZE.0/20)-1), y:rng.gen_range(0, (WINDOWSIZE.1/20)-1)},
 		ate_food:false,
 	};	
