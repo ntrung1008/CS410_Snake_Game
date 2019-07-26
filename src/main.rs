@@ -17,7 +17,7 @@ enum Direction {
 	Right,Left,Up,Down
 }
 
-static WINDOWSIZE : (u32,u32)=(1000,1000);
+static WINDOWSIZE : (u32,u32)=(400,400);
 
 pub struct Game 
 {
@@ -134,7 +134,7 @@ impl Snake{
                                     self.snek.push((head.0-1,head.1));
                                     if !eaten {self.snek.remove(0);}
                                 },
-			Direction::Right => if head.0 > WINDOWSIZE.0/20 {self.alive = false}
+			Direction::Right => if head.0 >= WINDOWSIZE.0/20-1 {self.alive = false}
                                 else {
                                     self.snek.push((head.0+1,head.1));
                                     if !eaten {self.snek.remove(0);}
@@ -144,7 +144,7 @@ impl Snake{
                                     self.snek.push((head.0,head.1-1));
                                     if !eaten {self.snek.remove(0);}
                                 },
-			Direction::Down  => if head.1 > WINDOWSIZE.1/20  {self.alive = false}
+			Direction::Down  => if head.1 >= WINDOWSIZE.1/20-1  {self.alive = false}
                                 else {
                                     self.snek.push((head.0,head.1+1));
                                     if !eaten {self.snek.remove(0);}
@@ -171,25 +171,25 @@ fn main() {
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
 		snake: Snake{snek: vec![(5,5),(5,6),(6,6),(6,7)], dir: Direction :: Right, alive: true},
-		food :Food {x :rng.gen_range(0, WINDOWSIZE.0/20 ), y:rng.gen_range(0, WINDOWSIZE.1/20 )},
+		food :Food {x :rng.gen_range(0, (WINDOWSIZE.0/20)-1), y:rng.gen_range(0, (WINDOWSIZE.1/20)-1)},
 		ate_food:false,
 	};	
 	
-	let mut events = Events::new(EventSettings::new()).ups(30);//how often to update
+	let mut events = Events::new(EventSettings::new()).ups(2); //how often to update
     while let Some(e) = events.next(&mut window) {
-        if let Some(r) = e.render_args() {
-            game.render(&r);
-        }
+		if let Some(key) = e.button_args(){
+			game.pressed(&key.button);
+		}
 		
-		if let Some(u) = e.update_args() {
+        if let Some(u) = e.update_args() {
 			game.update();
             if !game.snake.alive {
                 break;
 		    }
         }
 		
-		if let Some(key) = e.button_args(){
-			game.pressed(&key.button);
-		}
+        if let Some(r) = e.render_args() {
+            game.render(&r);
+        }
 	}
 }
