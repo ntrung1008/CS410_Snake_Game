@@ -25,6 +25,7 @@ pub struct Game
 	snake: Snake, 
 	food : Food,
 	ate_food:bool,
+	score : u32,
 }
 
 impl Game {
@@ -47,6 +48,7 @@ impl Game {
 		{
 			let mut rng = rand::thread_rng();
 			self.food= Food{x:rng.gen_range(0,20),y:rng.gen_range(0,20)};
+			self.score +=1;
 			self.ate_food=false;
 		}
 	}
@@ -172,6 +174,7 @@ fn main() {
 		snake: Snake{snek: vec![(5,5),(5,6),(6,6),(6,7),(7,7),(8,7),(8,8)], dir: Direction :: Right, alive: true},
 		food :Food {x :rng.gen_range(0, (WINDOWSIZE.0/20)-1), y:rng.gen_range(0, (WINDOWSIZE.1/20)-1)},
 		ate_food:false,
+		score:0,
 	};	
 	
 	let mut events = Events::new(EventSettings::new()).ups(2); //how often to update
@@ -191,4 +194,5 @@ fn main() {
             game.render(&r);
         }
 	}
+	println!("Game over. Your score is {}", game.score);
 }
