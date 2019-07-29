@@ -17,13 +17,15 @@ enum Direction {
 	Right,Left,Up,Down
 }
 
-static WINDOWSIZE : (u32,u32)=(400,400);
+static WINDOWSIZE : (u32,u32)=(800,800);
+static RESPAWN_ENEMY :u32 = 50;
 
 pub struct Game 
 {
     gl: GlGraphics,
 	snake: Snake, 
 	food : Food,
+	enemy :Enemy,
 	ate_food:bool,
 	score : u32,
 }
@@ -40,6 +42,9 @@ impl Game {
         });
 		self.snake.render(&mut self.gl, args);
 		self.food.render(&mut self.gl, args);
+		self.enemy.render(&mut self.gl, args);
+
+		
     }
 	fn update( &mut self){
 		self.ate_food = self.food.got_eaten(&self.snake);
@@ -50,6 +55,17 @@ impl Game {
 			self.food= Food{x:rng.gen_range(0,20),y:rng.gen_range(0,20)};
 			self.score +=1;
 			self.ate_food=false;
+		}
+		if self.enemy.kill_snake(&self.snake) ==true
+		{
+			self.snake.alive = false;
+		}
+		self.enemy.spawn -=1;
+		if self.enemy.spawn ==0
+		{
+			let mut rng = rand::thread_rng();
+			self.enemy= Enemy{x:rng.gen_range(0,20),y:rng.gen_range(0,20),spawn:RESPAWN_ENEMY};
+		
 		}
 	}
 	fn pressed(&mut self, btn :& Button){
@@ -77,7 +93,7 @@ struct Food {
 impl Food{
 	fn render(&self,gl: &mut GlGraphics, args:&RenderArgs)
 	{
-		use graphics;
+//		use graphics;
 		const RED:   [f32; 4] = [1.0, 0.0, 0.0, 1.0];
         let ellipse = graphics::rectangle::square((self.x *20) as f64, (self.y*20) as f64, 20_f64);
 		gl.draw(args.viewport(),|c,gl|
@@ -109,7 +125,7 @@ struct Snake {
 impl Snake{
 	fn render(&self,gl: &mut GlGraphics, args:&RenderArgs)
 	{
-		use graphics;
+//		use graphics;
 		const RED:   [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 		gl.draw(args.viewport(),|c,gl|
 		{
@@ -154,6 +170,37 @@ impl Snake{
         if !eaten {self.snek.remove(0);}
 	}
 }
+struct Enemy {
+    x :u32,
+	y :u32,
+	spawn:u32,
+}
+impl Enemy{
+	fn render(&self,gl: &mut GlGraphics, args:&RenderArgs)
+	{
+//		use graphics;
+		const BLACK:   [f32; 4] = [0.0, 0.0, 0.0, 1.0];
+        let ellipse = graphics::rectangle::square((self.x *20) as f64, (self.y*20) as f64, 20_f64);
+		gl.draw(args.viewport(),|c,gl|
+		{
+			let transform = c.transform;
+			graphics::ellipse(BLACK,ellipse,transform,gl);
+		})
+	}
+
+	fn kill_snake (& mut self, snake: &Snake) ->bool
+	{
+        let head: (u32, u32);
+        // Get snek head
+        match snake.snek.last() {
+            Some(s) => head = *s,
+            None    => panic!("snek length 0"),
+        }
+		if head.0 == self.x && head.1 == self.y
+		{	return true;}
+		return false;
+	}
+}
 
 fn main() {
     // Change this to OpenGL::V2_1 if not working.
@@ -175,6 +222,7 @@ fn main() {
 		food :Food {x :rng.gen_range(0, (WINDOWSIZE.0/20)-1), y:rng.gen_range(0, (WINDOWSIZE.1/20)-1)},
 		ate_food:false,
 		score:0,
+		enemy :Enemy {x :rng.gen_range(0, (WINDOWSIZE.0/20)-1), y:rng.gen_range(0, (WINDOWSIZE.1/20)-1),spawn: RESPAWN_ENEMY},
 	};	
 	
 	let mut events = Events::new(EventSettings::new()).ups(2); //how often to update
@@ -183,7 +231,7 @@ fn main() {
 			game.pressed(&key.button);
 		}
 		
-        if let Some(u) = e.update_args() {
+        if let Some(_u) = e.update_args() {
 			game.update();
             if !game.snake.alive {
                 break;
