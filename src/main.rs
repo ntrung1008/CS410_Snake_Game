@@ -17,17 +17,17 @@ enum Direction {
 	Right,Left,Up,Down
 }
 
-static WINDOWSIZE : (u32,u32)=(800,800);
-static RESPAWN_ENEMY :u32 = 50;
+static WINDOWSIZE 		:(u32,u32)=(800,800);
+static RESPAWN_ENEMY	:u32 = 50;
 
 pub struct Game 
 {
-    gl: GlGraphics,
-	snake: Snake, 
-	food : Food,
-	enemy :Enemy,
+    gl		:GlGraphics,
+	snake	:Snake, 
+	food 	:Food,
+	enemy 	:Enemy,
 	ate_food:bool,
-	score : u32,
+	score 	:u32,
 }
 
 impl Game {
@@ -46,6 +46,7 @@ impl Game {
 
 		
     }
+
 	fn update( &mut self){
 		self.ate_food = self.food.got_eaten(&self.snake);
 		self.snake.update(self.ate_food);
@@ -68,6 +69,7 @@ impl Game {
 		
 		}
 	}
+
 	fn pressed(&mut self, btn :& Button){
 		let current_direction = self.snake.dir.clone();
 		self.snake.dir = match btn 
@@ -93,7 +95,6 @@ struct Food {
 impl Food{
 	fn render(&self,gl: &mut GlGraphics, args:&RenderArgs)
 	{
-//		use graphics;
 		const RED:   [f32; 4] = [1.0, 0.0, 0.0, 1.0];
         let ellipse = graphics::rectangle::square((self.x *20) as f64, (self.y*20) as f64, 20_f64);
 		gl.draw(args.viewport(),|c,gl|
@@ -102,6 +103,7 @@ impl Food{
 			graphics::ellipse(RED,ellipse,transform,gl);
 		})
 	}
+
 	fn got_eaten (& mut self, snake: &Snake) ->bool
 	{
         let head: (u32, u32);
@@ -125,7 +127,6 @@ struct Snake {
 impl Snake{
 	fn render(&self,gl: &mut GlGraphics, args:&RenderArgs)
 	{
-//		use graphics;
 		const RED:   [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 		gl.draw(args.viewport(),|c,gl|
 		{
