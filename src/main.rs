@@ -8,9 +8,9 @@ use piston::window::WindowSettings;
 use piston::event_loop::*;
 use piston::input::*;
 use glutin_window::GlutinWindow as Window;
-use opengl_graphics::{ GlGraphics, OpenGL };
+use opengl_graphics::{GlGraphics, OpenGL, GlyphCache, TextureSettings, Filter};
 use rand::Rng;
-
+use graphics::Transformed;
 
 #[derive(Clone,PartialEq)]
 enum Direction {
@@ -34,17 +34,34 @@ pub struct Game
 }
 
 impl Game {
-    fn render(&mut self, args: &RenderArgs) {
+    fn render(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs) {
 
         const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-        self.gl.draw(args.viewport(), |_c, gl|
+		let score_str = self.score.to_string().into_boxed_str();
+        self.gl.draw(args.viewport(), |c, gl|
 		{
             // Clear the screen.
-            graphics::clear(GREEN, gl);  
+            graphics::clear(graphics::color::WHITE, gl);  
+			let trans = c.transform.trans((WINDOWSIZE.0-50) as f64, (WINDOWSIZE.1-50) as f64);
+			graphics::text::Text::new(20).draw(
+				"SCORE",
+				glyphs,
+				&c.draw_state,
+				trans,
+				gl
+			);
+			let trans2 = c.transform.trans((WINDOWSIZE.0-25) as f64, (WINDOWSIZE.1-25) as f64);
+			graphics::text::Text::new(20).draw(
+				&*score_str,
+				glyphs,
+				&c.draw_state,
+				trans2,
+				gl
+			);
         });
 		self.snake.render(&mut self.gl, args);
-		self.food.render(&mut self.gl, args);
 		self.enemy.render(&mut self.gl, args);
+		self.food.render(&mut self.gl, args);
     }
 
 	fn update( &mut self){
@@ -133,7 +150,7 @@ impl Snake{
 			let transform = c.transform;
             for piece in &self.snek {
                 let square = graphics::rectangle::square((piece.0*BOXSIZE) as f64, (piece.1*BOXSIZE) as f64, BOXSIZE as f64);
-			    graphics::rectangle(RED,square,transform,gl);
+			    graphics::rectangle(graphics::color::BLACK,square,transform,gl);
             }
 		})
 	}
@@ -213,6 +230,8 @@ fn main() {
         .exit_on_esc(true)
         .build()
         .unwrap();
+	let texture_settings = TextureSettings::new().filter(Filter::Nearest);
+	let mut glyphs = GlyphCache::new("src/BebasNeue-Regular.ttf", (),texture_settings).expect("could not load font");
 	let mut rng = rand::thread_rng();
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
@@ -237,7 +256,7 @@ fn main() {
         }
 		
         if let Some(r) = e.render_args() {
-            game.render(&r);
+            game.render(&mut glyphs, &r);
         }
 	}
 	println!("Game over. Your score is {}", game.score);
