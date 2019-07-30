@@ -21,7 +21,7 @@ enum Direction {
 static WINDOWSIZE 		:(u32,u32)=(800,800);
 static RESPAWN_ENEMY	:u32 = 50;
 static BOXSIZE			:u32 = 20;
-static UPS				:u64 = 5;
+static UPS				:u64 = 10;
 
 pub struct Game 
 {
@@ -36,12 +36,14 @@ pub struct Game
 impl Game {
     fn render(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs) {
 
-        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
+        // const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 		let score_str = self.score.to_string().into_boxed_str();
         self.gl.draw(args.viewport(), |c, gl|
 		{
             // Clear the screen.
             graphics::clear(graphics::color::WHITE, gl);  
+			
+			// Draw the score
 			let trans = c.transform.trans((WINDOWSIZE.0-50) as f64, (WINDOWSIZE.1-50) as f64);
 			graphics::text::Text::new(20).draw(
 				"SCORE",
@@ -49,7 +51,7 @@ impl Game {
 				&c.draw_state,
 				trans,
 				gl
-			);
+			).unwrap();
 			let trans2 = c.transform.trans((WINDOWSIZE.0-25) as f64, (WINDOWSIZE.1-25) as f64);
 			graphics::text::Text::new(20).draw(
 				&*score_str,
@@ -57,11 +59,13 @@ impl Game {
 				&c.draw_state,
 				trans2,
 				gl
-			);
+			).unwrap();
         });
+
+		// Render the rest
+		self.food.render(&mut self.gl, args);
 		self.snake.render(&mut self.gl, args);
 		self.enemy.render(&mut self.gl, args);
-		self.food.render(&mut self.gl, args);
     }
 
 	fn update( &mut self){
@@ -144,7 +148,7 @@ struct Snake {
 impl Snake{
 	fn render(&self,gl: &mut GlGraphics, args:&RenderArgs)
 	{
-		const RED:   [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+		// const RED:   [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 		gl.draw(args.viewport(),|c,gl|
 		{
 			let transform = c.transform;
@@ -230,8 +234,12 @@ fn main() {
         .exit_on_esc(true)
         .build()
         .unwrap();
+
+	// Init font
 	let texture_settings = TextureSettings::new().filter(Filter::Nearest);
+	// Font from Ryoichi Tsunekawa at Adobe Fonts
 	let mut glyphs = GlyphCache::new("src/BebasNeue-Regular.ttf", (),texture_settings).expect("could not load font");
+
 	let mut rng = rand::thread_rng();
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
