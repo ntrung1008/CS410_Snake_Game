@@ -19,7 +19,7 @@ enum Direction {
 
 // MAKE SURE WINDOWSIZE IS A MULTIPLE OF BOXSIZE
 static WINDOWSIZE 		:(u32,u32)=(800,800);
-static RESPAWN_ENEMY	:u32 = 50;
+static RESPAWN_ENEMY	:i32 = 50;
 static BOXSIZE			:u32 = 20;
 static UPS				:u64 = 10;
 
@@ -38,6 +38,7 @@ impl Game {
 
         // const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 		let score_str = self.score.to_string().into_boxed_str();
+
         self.gl.draw(args.viewport(), |c, gl|
 		{
             // Clear the screen.
@@ -71,22 +72,19 @@ impl Game {
 	fn update( &mut self){
 		self.ate_food = self.food.got_eaten(&self.snake);
 		self.snake.update(self.ate_food);
-		if self.ate_food== true
-		{
+		if self.ate_food == true {
 			let mut rng = rand::thread_rng();
-			self.food= Food{x:rng.gen_range(0,WINDOWSIZE.0/BOXSIZE),y:rng.gen_range(0,WINDOWSIZE.1/BOXSIZE)};
-			self.score +=1;
-			self.ate_food=false;
+			self.food = Food{x:rng.gen_range(0,WINDOWSIZE.0/BOXSIZE-1),y:rng.gen_range(0,WINDOWSIZE.1/BOXSIZE-1)};
+			self.score += 1;
+			self.ate_food = false;
 		}
-		if self.enemy.kill_snake(&self.snake) ==true
-		{
+		if self.enemy.kill_snake(&self.snake) == true {
 			self.snake.alive = false;
 		}
-		self.enemy.spawn -=1;
-		if self.enemy.spawn ==0
-		{
+		self.enemy.spawn -= 1;
+		if self.enemy.spawn <= 0 {
 			let mut rng = rand::thread_rng();
-			self.enemy= Enemy{x:rng.gen_range(0,WINDOWSIZE.0/BOXSIZE),y:rng.gen_range(0,WINDOWSIZE.1/BOXSIZE),spawn:RESPAWN_ENEMY};
+			self.enemy = Enemy{x:rng.gen_range(0,WINDOWSIZE.0/BOXSIZE-1),y:rng.gen_range(0,WINDOWSIZE.1/BOXSIZE-1),spawn:RESPAWN_ENEMY};
 		
 		}
 	}
@@ -133,8 +131,7 @@ impl Food{
             Some(s) => head = *s,
             None    => panic!("snek length 0"),
         }
-		if head.0 == self.x && head.1 == self.y
-		{	return true;}
+		if head.0 == self.x && head.1 == self.y {return true;}
 		return false;
 	}
 }
@@ -188,22 +185,21 @@ impl Snake{
 struct Enemy {
     x :u32,
 	y :u32,
-	spawn:u32,
+	spawn:i32,
 }
 
 impl Enemy{
 	fn render(&self,gl: &mut GlGraphics, args:&RenderArgs)
 	{
 		const BLACK:   [f32; 4] = [0.0, 0.0, 0.0, 1.0];
-        let ellipse = graphics::rectangle::square((self.x *WINDOWSIZE.0/BOXSIZE) as f64, (self.y*WINDOWSIZE.1/BOXSIZE) as f64, BOXSIZE as f64);
-		gl.draw(args.viewport(),|c,gl|
-		{
+        let ellipse = graphics::rectangle::square((self.x * BOXSIZE) as f64, (self.y * BOXSIZE) as f64, BOXSIZE as f64);
+		gl.draw(args.viewport(),|c,gl| {
 			let transform = c.transform;
 			graphics::ellipse(BLACK,ellipse,transform,gl);
 		})
 	}
 
-	fn kill_snake (& mut self, snake: &Snake) ->bool
+	fn kill_snake (& mut self, snake: &Snake) -> bool
 	{
         let head: (u32, u32);
         // Get snek head
@@ -211,8 +207,7 @@ impl Enemy{
             Some(s) => head = *s,
             None    => panic!("snek length 0"),
         }
-		if head.0 == self.x && head.1 == self.y
-		{	return true;}
+		if head.0 == self.x && head.1 == self.y {return true;}
 		return false;
 	}
 }
