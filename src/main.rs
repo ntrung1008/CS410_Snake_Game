@@ -19,7 +19,7 @@ enum Direction {
 
 // MAKE SURE WINDOWSIZE IS A MULTIPLE OF BOXSIZE
 static WINDOWSIZE 		:(u32,u32)=(800,800);
-static RESPAWN_ENEMY	:i32 = 50;
+static RESPAWN_ENEMY	:u32 = 50;
 static BOXSIZE			:u32 = 20;
 static UPS				:u64 = 10;
 
@@ -155,6 +155,7 @@ impl Game {
 	}
 
 	fn update_game(&mut self){
+		//Snake 1
 		self.ate_food = self.food.got_eaten(&self.snake);
 		self.snake.update(self.ate_food);
 		if self.ate_food == true {
@@ -167,6 +168,8 @@ impl Game {
 			self.snake.alive = false;
 		}
 		
+		//Snake 2
+		self.ate_food = self.food.got_eaten(&self.snake2);
 		self.snake2.update(self.ate_food);
 		if self.ate_food == true {
 			let mut rng = rand::thread_rng();
@@ -177,6 +180,8 @@ impl Game {
 		if self.enemy.kill_snake(&self.snake2) == true {
 			self.snake2.alive = false;
 		}
+		
+		
 		self.enemy.spawn -= 1;
 		if self.enemy.spawn <= 0 {
 			let mut rng = rand::thread_rng();
@@ -204,22 +209,22 @@ impl Game {
 	}
 
 	fn pressed_game(&mut self, btn :& Button){
-		let current_direction = self.snake.dir.clone();
-		self.snake.dir = match btn 
+		let current_direction2 = self.snake2.dir.clone();
+		self.snake2.dir = match btn 
 		{
 			&Button::Keyboard(Key::Up)
-				if current_direction != Direction::Down => Direction::Up, //if the snake is not going down then change it to go up
+				if current_direction2 != Direction::Down => Direction::Up, //if the snake is not going down then change it to go up
 			&Button::Keyboard(Key::Down)
-				if current_direction != Direction::Up => Direction::Down,
+				if current_direction2 != Direction::Up => Direction::Down,
 			&Button::Keyboard(Key::Left)
-				if current_direction != Direction::Right => Direction::Left,
+				if current_direction2 != Direction::Right => Direction::Left,
 			&Button::Keyboard(Key::Right)
-				if current_direction != Direction::Left => Direction::Right,
-			_ => current_direction,
+				if current_direction2 != Direction::Left => Direction::Right,
+			_ => current_direction2,
 		};
 		
-		let current_direction = self.snake2.dir.clone();
-		self.snake2.dir = match btn 
+		let current_direction = self.snake.dir.clone();
+		self.snake.dir = match btn 
 		{
 			&Button::Keyboard(Key::W)
 				if current_direction != Direction::Down => Direction::Up, //if the snake is not going down then change it to go up
@@ -301,17 +306,17 @@ impl Snake{
         }
         // Check for death by wall
 		let next: (u32,u32) = match self.dir {
-			Direction::Left  => {if head.0 == 0 {self.alive = false;}
-                                (head.0-1,head.1)},
+			Direction::Left  => {if head.0 == 0 {self.alive = false; (0,0)}
+								else{(head.0-1,head.1)}},
 			Direction::Right => {if head.0 >= WINDOWSIZE.0/BOXSIZE-1 {self.alive = false;}
                                 (head.0+1,head.1)},
-			Direction::Up    => {if head.1 == 0 {self.alive = false;}
-                                (head.0,head.1-1)},
+			Direction::Up    => {if head.1 == 0 {self.alive = false;(0,0)}
+                                else{(head.0,head.1-1)}},
 			Direction::Down  => {if head.1 >= WINDOWSIZE.1/BOXSIZE-1 {self.alive = false;}
                                 (head.0,head.1+1)},
 		};
 
-		if self.snek.contains(&next) {self.alive = false}
+		if self.snek.contains(&next) {self.alive = false;}
         self.snek.push(next);
         if !eaten {self.snek.remove(0);}
 	}
@@ -320,7 +325,7 @@ impl Snake{
 struct Enemy {
     x :u32,
 	y :u32,
-	spawn:i32,
+	spawn:u32,
 }
 
 impl Enemy{
@@ -391,7 +396,7 @@ fn main() {
 		
         if let Some(_u) = e.update_args() {
 			game.update();
-            if !game.snake.alive {
+            if !game.snake.alive || !game.snake2.alive {
                 break;
 		    }
         }
