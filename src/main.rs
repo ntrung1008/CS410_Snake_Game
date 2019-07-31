@@ -157,7 +157,7 @@ impl Game {
 	fn update_game(&mut self){
 		//Snake 1
 		self.ate_food = self.food.got_eaten(&self.snake);
-		self.snake.update(self.ate_food);
+		self.snake.update(self.ate_food,&self.snake2);
 		if self.ate_food == true {
 			let mut rng = rand::thread_rng();
 			self.food = Food{x:rng.gen_range(0,WINDOWSIZE.0/BOXSIZE-1),y:rng.gen_range(0,WINDOWSIZE.1/BOXSIZE-1)};
@@ -170,7 +170,7 @@ impl Game {
 		
 		//Snake 2
 		self.ate_food = self.food.got_eaten(&self.snake2);
-		self.snake2.update(self.ate_food);
+		self.snake2.update(self.ate_food,&self.snake);
 		if self.ate_food == true {
 			let mut rng = rand::thread_rng();
 			self.food = Food{x:rng.gen_range(0,WINDOWSIZE.0/BOXSIZE-1),y:rng.gen_range(0,WINDOWSIZE.1/BOXSIZE-1)};
@@ -296,7 +296,7 @@ impl Snake{
 		})
 	}
 
-	fn update (&mut self, eaten: bool)
+	fn update (&mut self, eaten: bool, other_snake: &Snake)
 	{
         let head: (u32,u32);
         // Get snek head
@@ -319,6 +319,16 @@ impl Snake{
 		if self.snek.contains(&next) {self.alive = false;}
         self.snek.push(next);
         if !eaten {self.snek.remove(0);}
+		
+		let other :(u32,u32) ;
+		match other_snake.snek.last()
+		{
+			Some(s) => other = *s,
+			Non => panic!("other snek length 0"),
+		}
+		if self.snek.contains(&other) {self.alive = false};
+		
+		
 	}
 }
 
