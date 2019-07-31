@@ -32,6 +32,7 @@ pub struct Game
 	enemy 	:Enemy,
 	ate_food:bool,
 	score 	:u32,
+	score2 	:u32,
 	select  :u8,
 	hover	:u32,
 }
@@ -108,6 +109,8 @@ impl Game {
 
         // const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 		let score_str = self.score.to_string().into_boxed_str();
+		let score_str2 = self.score2.to_string().into_boxed_str();
+
 
         self.gl.draw(args.viewport(), |c, gl|
 		{
@@ -115,29 +118,46 @@ impl Game {
             graphics::clear(graphics::color::WHITE, gl);  
 			
 			// Draw the score
-			let trans = c.transform.trans((WINDOWSIZE.0-50) as f64, (WINDOWSIZE.1-50) as f64);
+			let trans = c.transform.trans((WINDOWSIZE.0-60) as f64, (WINDOWSIZE.1-50) as f64);
 			graphics::text::Text::new(20).draw(
-				"SCORE",
+				"SCORE2",
 				glyphs,
 				&c.draw_state,
 				trans,
 				gl
 			).unwrap();
 
-			let trans2 = c.transform.trans((WINDOWSIZE.0-25) as f64, (WINDOWSIZE.1-25) as f64);
+			let trans2 = c.transform.trans((WINDOWSIZE.0-30) as f64, (WINDOWSIZE.1-25) as f64);
+			graphics::text::Text::new(20).draw(
+				&*score_str2,
+				glyphs,
+				&c.draw_state,
+				trans2,
+				gl
+			).unwrap();
+			let trans3 = c.transform.trans((WINDOWSIZE.0-WINDOWSIZE.0) as f64, (WINDOWSIZE.1-50) as f64);
+			graphics::text::Text::new(20).draw(
+				"SCORE",
+				glyphs,
+				&c.draw_state,
+				trans3,
+				gl
+			).unwrap();
+
+			let trans4 = c.transform.trans((WINDOWSIZE.0-WINDOWSIZE.0) as f64, (WINDOWSIZE.1-25) as f64);
 			graphics::text::Text::new(20).draw(
 				&*score_str,
 				glyphs,
 				&c.draw_state,
-				trans2,
+				trans4,
 				gl
 			).unwrap();
         });
 
 		// Render the rest
 		self.food.render(&mut self.gl, args);
-		self.snake.render(&mut self.gl, args,1);
-		self.snake2.render(&mut self.gl, args,2);
+		if self.snake.alive == true {self.snake.render(&mut self.gl, args,1);}
+		if self.snake2.alive ==true {self.snake2.render(&mut self.gl, args,2);}
 		self.enemy.render(&mut self.gl, args);
     }
 
@@ -156,29 +176,35 @@ impl Game {
 
 	fn update_game(&mut self){
 		//Snake 1
-		self.ate_food = self.food.got_eaten(&self.snake);
-		self.snake.update(self.ate_food,&self.snake2);
-		if self.ate_food == true {
-			let mut rng = rand::thread_rng();
-			self.food = Food{x:rng.gen_range(0,WINDOWSIZE.0/BOXSIZE-1),y:rng.gen_range(0,WINDOWSIZE.1/BOXSIZE-1)};
-			self.score += 1;
-			self.ate_food = false;
-		}
-		if self.enemy.kill_snake(&self.snake) == true {
-			self.snake.alive = false;
+		if self.snake.alive == true
+		{
+			self.ate_food = self.food.got_eaten(&self.snake);
+			self.snake.update(self.ate_food,& mut self.snake2);
+			if self.ate_food == true {
+				let mut rng = rand::thread_rng();
+				self.food = Food{x:rng.gen_range(0,WINDOWSIZE.0/BOXSIZE-1),y:rng.gen_range(0,WINDOWSIZE.1/BOXSIZE-1)};
+				self.score += 1;
+				self.ate_food = false;
+			}
+			if self.enemy.kill_snake(&self.snake) == true {
+				self.snake.alive = false;
+			}
 		}
 		
 		//Snake 2
-		self.ate_food = self.food.got_eaten(&self.snake2);
-		self.snake2.update(self.ate_food,&self.snake);
-		if self.ate_food == true {
-			let mut rng = rand::thread_rng();
-			self.food = Food{x:rng.gen_range(0,WINDOWSIZE.0/BOXSIZE-1),y:rng.gen_range(0,WINDOWSIZE.1/BOXSIZE-1)};
-			self.score += 1;
-			self.ate_food = false;
-		}
-		if self.enemy.kill_snake(&self.snake2) == true {
-			self.snake2.alive = false;
+		if self.snake2.alive == true
+		{
+			self.ate_food = self.food.got_eaten(&self.snake2);
+			self.snake2.update(self.ate_food,& mut self.snake);
+			if self.ate_food == true {
+				let mut rng = rand::thread_rng();
+				self.food = Food{x:rng.gen_range(0,WINDOWSIZE.0/BOXSIZE-1),y:rng.gen_range(0,WINDOWSIZE.1/BOXSIZE-1)};
+				self.score2 += 1;
+				self.ate_food = false;
+			}
+			if self.enemy.kill_snake(&self.snake2) == true {
+				self.snake2.alive = false;
+			}
 		}
 		
 		
@@ -296,7 +322,7 @@ impl Snake{
 		})
 	}
 
-	fn update (&mut self, eaten: bool, other_snake: &Snake)
+	fn update (&mut self, eaten: bool,  other_snake: & mut Snake)
 	{
         let head: (u32,u32);
         // Get snek head
@@ -316,17 +342,19 @@ impl Snake{
                                 (head.0,head.1+1)},
 		};
 
+		//logic if run into self
 		if self.snek.contains(&next) {self.alive = false;}
         self.snek.push(next);
         if !eaten {self.snek.remove(0);}
 		
+		//logic if run into other
 		let other :(u32,u32) ;
 		match other_snake.snek.last()
 		{
 			Some(s) => other = *s,
-			Non => panic!("other snek length 0"),
+			None => panic!("other snek length 0"),
 		}
-		if self.snek.contains(&other) {self.alive = false};
+		if self.snek.contains(&other) {other_snake.alive = false};
 		
 		
 	}
@@ -377,6 +405,7 @@ fn main() {
         )
         .graphics_api(opengl)
         .exit_on_esc(true)
+		.fullscreen(true)
         .build()
         .unwrap();
 
@@ -393,6 +422,7 @@ fn main() {
 		food 	:Food {x :rng.gen_range(0, (WINDOWSIZE.0/BOXSIZE)-1), y:rng.gen_range(0, (WINDOWSIZE.1/BOXSIZE)-1)},
 		ate_food:false,
 		score	:0,
+		score2  :0,
 		enemy 	:Enemy {x :rng.gen_range(0, (WINDOWSIZE.0/BOXSIZE)-1), y:rng.gen_range(0, (WINDOWSIZE.1/BOXSIZE)-1),spawn: RESPAWN_ENEMY},
 		select	:0,
 		hover	:1,
@@ -406,7 +436,7 @@ fn main() {
 		
         if let Some(_u) = e.update_args() {
 			game.update();
-            if !game.snake.alive || !game.snake2.alive {
+            if !game.snake.alive && !game.snake2.alive {
                 break;
 		    }
         }
