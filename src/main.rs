@@ -31,10 +31,73 @@ pub struct Game
 	enemy 	:Enemy,
 	ate_food:bool,
 	score 	:u32,
+	select  :u8,
+	hover	:u8,
 }
 
 impl Game {
     fn render(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs) {
+		if self.select == 0 {
+			self.render_menu(glyphs,args);
+		}
+		if self.select == 1 {
+			self.render_game(glyphs,args);
+		}
+	}
+
+    fn render_menu(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs) {
+        self.gl.draw(args.viewport(), |c, gl|
+		{
+            // Clear the screen.
+            graphics::clear(graphics::color::WHITE, gl);  
+			
+			// Draw the title
+			let trans = c.transform.trans((WINDOWSIZE.0/4) as f64, (WINDOWSIZE.1/3) as f64);
+			graphics::text::Text::new(WINDOWSIZE.0/4).draw(
+				"SNEK",
+				glyphs,
+				&c.draw_state,
+				trans,
+				gl
+			).unwrap();
+
+			// Draw menu options
+			let trans = c.transform.trans((WINDOWSIZE.0 as f64 * 0.3) as f64, (WINDOWSIZE.1/6*3) as f64);
+			graphics::text::Text::new(WINDOWSIZE.0/14).draw(
+				"play",
+				glyphs,
+				&c.draw_state,
+				trans,
+				gl
+			).unwrap();
+			let trans = c.transform.trans((WINDOWSIZE.0 as f64 * 0.3) as f64, (WINDOWSIZE.1/6*4) as f64);
+			graphics::text::Text::new(WINDOWSIZE.0/14).draw(
+				"scores",
+				glyphs,
+				&c.draw_state,
+				trans,
+				gl
+			).unwrap();
+			let trans = c.transform.trans((WINDOWSIZE.0 as f64 * 0.3) as f64, (WINDOWSIZE.1/6*5) as f64);
+			graphics::text::Text::new(WINDOWSIZE.0/14).draw(
+				"options",
+				glyphs,
+				&c.draw_state,
+				trans,
+				gl
+			).unwrap();
+			let trans = c.transform.trans(0 as f64, (WINDOWSIZE.1-5) as f64);
+			graphics::text::Text::new(WINDOWSIZE.0/30).draw(
+				"press ESC to quit...",
+				glyphs,
+				&c.draw_state,
+				trans,
+				gl
+			).unwrap();
+		});
+	}
+
+    fn render_game(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs) {
 
         // const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 		let score_str = self.score.to_string().into_boxed_str();
@@ -53,6 +116,7 @@ impl Game {
 				trans,
 				gl
 			).unwrap();
+
 			let trans2 = c.transform.trans((WINDOWSIZE.0-25) as f64, (WINDOWSIZE.1-25) as f64);
 			graphics::text::Text::new(20).draw(
 				&*score_str,
@@ -69,7 +133,16 @@ impl Game {
 		self.enemy.render(&mut self.gl, args);
     }
 
-	fn update( &mut self){
+	fn update(&mut self){
+		if self.select == 0 {
+
+		}
+		if self.select == 1 {
+			self.update_game();
+		}
+	}
+
+	fn update_game(&mut self){
 		self.ate_food = self.food.got_eaten(&self.snake);
 		self.snake.update(self.ate_food);
 		if self.ate_food == true {
@@ -238,11 +311,13 @@ fn main() {
 	let mut rng = rand::thread_rng();
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
-		snake: Snake{snek: vec![(5,5),(5,6),(6,6),(6,7),(7,7),(8,7),(8,8)], dir: Direction :: Right, alive: true},
-		food :Food {x :rng.gen_range(0, (WINDOWSIZE.0/BOXSIZE)-1), y:rng.gen_range(0, (WINDOWSIZE.1/BOXSIZE)-1)},
+		snake	:Snake{snek: vec![(5,5),(5,6),(6,6),(6,7),(7,7),(8,7),(8,8)], dir: Direction :: Right, alive: true},
+		food 	:Food {x :rng.gen_range(0, (WINDOWSIZE.0/BOXSIZE)-1), y:rng.gen_range(0, (WINDOWSIZE.1/BOXSIZE)-1)},
 		ate_food:false,
-		score:0,
-		enemy :Enemy {x :rng.gen_range(0, (WINDOWSIZE.0/BOXSIZE)-1), y:rng.gen_range(0, (WINDOWSIZE.1/BOXSIZE)-1),spawn: RESPAWN_ENEMY},
+		score	:0,
+		enemy 	:Enemy {x :rng.gen_range(0, (WINDOWSIZE.0/BOXSIZE)-1), y:rng.gen_range(0, (WINDOWSIZE.1/BOXSIZE)-1),spawn: RESPAWN_ENEMY},
+		select	:0,
+		hover	:1,
 	};	
 	
 	let mut events = Events::new(EventSettings::new()).ups(UPS); //how often to update
