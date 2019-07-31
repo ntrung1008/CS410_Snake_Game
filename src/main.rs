@@ -136,8 +136,8 @@ impl Game {
 
 		// Render the rest
 		self.food.render(&mut self.gl, args);
-		self.snake.render(&mut self.gl, args);
-		self.snake2.render(&mut self.gl, args);
+		self.snake.render(&mut self.gl, args,1);
+		self.snake2.render(&mut self.gl, args,2);
 		self.enemy.render(&mut self.gl, args);
     }
 
@@ -271,15 +271,22 @@ struct Snake {
 }
 
 impl Snake{
-	fn render(&self,gl: &mut GlGraphics, args:&RenderArgs)
+	fn render(&self,gl: &mut GlGraphics, args:&RenderArgs, player :u8)
 	{
-		// const RED:   [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+		const RED:   [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 		gl.draw(args.viewport(),|c,gl|
 		{
 			let transform = c.transform;
             for piece in &self.snek {
                 let square = graphics::rectangle::square((piece.0*BOXSIZE) as f64, (piece.1*BOXSIZE) as f64, BOXSIZE as f64);
-			    graphics::rectangle(graphics::color::BLACK,square,transform,gl);
+				if player ==1
+			    {
+					graphics::rectangle(graphics::color::BLACK,square,transform,gl);
+				}
+				else
+				{
+					graphics::rectangle(RED,square,transform,gl);
+				}
             }
 		})
 	}
