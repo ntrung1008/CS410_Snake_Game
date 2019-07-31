@@ -32,7 +32,7 @@ pub struct Game
 	ate_food:bool,
 	score 	:u32,
 	select  :u8,
-	hover	:u8,
+	hover	:u32,
 }
 
 impl Game {
@@ -46,13 +46,14 @@ impl Game {
 	}
 
     fn render_menu(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs) {
+		let hover_copy = self.hover;
         self.gl.draw(args.viewport(), |c, gl|
 		{
             // Clear the screen.
             graphics::clear(graphics::color::WHITE, gl);  
 			
 			// Draw the title
-			let trans = c.transform.trans((WINDOWSIZE.0/4) as f64, (WINDOWSIZE.1/3) as f64);
+			let mut trans = c.transform.trans((WINDOWSIZE.0/4) as f64, (WINDOWSIZE.1/3) as f64);
 			graphics::text::Text::new(WINDOWSIZE.0/4).draw(
 				"SNEK",
 				glyphs,
@@ -62,7 +63,7 @@ impl Game {
 			).unwrap();
 
 			// Draw menu options
-			let trans = c.transform.trans((WINDOWSIZE.0 as f64 * 0.3) as f64, (WINDOWSIZE.1/6*3) as f64);
+			trans = c.transform.trans((WINDOWSIZE.0 as f64 * 0.3) as f64, (WINDOWSIZE.1/6*3) as f64);
 			graphics::text::Text::new(WINDOWSIZE.0/14).draw(
 				"play",
 				glyphs,
@@ -70,7 +71,7 @@ impl Game {
 				trans,
 				gl
 			).unwrap();
-			let trans = c.transform.trans((WINDOWSIZE.0 as f64 * 0.3) as f64, (WINDOWSIZE.1/6*4) as f64);
+			trans = c.transform.trans((WINDOWSIZE.0 as f64 * 0.3) as f64, (WINDOWSIZE.1/6*4) as f64);
 			graphics::text::Text::new(WINDOWSIZE.0/14).draw(
 				"scores",
 				glyphs,
@@ -78,7 +79,7 @@ impl Game {
 				trans,
 				gl
 			).unwrap();
-			let trans = c.transform.trans((WINDOWSIZE.0 as f64 * 0.3) as f64, (WINDOWSIZE.1/6*5) as f64);
+			trans = c.transform.trans((WINDOWSIZE.0 as f64 * 0.3) as f64, (WINDOWSIZE.1/6*5) as f64);
 			graphics::text::Text::new(WINDOWSIZE.0/14).draw(
 				"options",
 				glyphs,
@@ -86,7 +87,7 @@ impl Game {
 				trans,
 				gl
 			).unwrap();
-			let trans = c.transform.trans(0 as f64, (WINDOWSIZE.1-5) as f64);
+			trans = c.transform.trans(0 as f64, (WINDOWSIZE.1-5) as f64);
 			graphics::text::Text::new(WINDOWSIZE.0/30).draw(
 				"press ESC to quit...",
 				glyphs,
@@ -94,6 +95,11 @@ impl Game {
 				trans,
 				gl
 			).unwrap();
+
+			// Draw circle selector
+			trans = c.transform;
+        	let ellip = graphics::rectangle::square(WINDOWSIZE.0 as f64 * 0.3 - 20.0, (WINDOWSIZE.1/6 * (hover_copy + 2) - 20) as f64, (BOXSIZE/2) as f64);
+			graphics::ellipse(graphics::color::BLACK, ellip, trans, gl);
 		});
 	}
 
@@ -135,11 +141,15 @@ impl Game {
 
 	fn update(&mut self){
 		if self.select == 0 {
-
+			self.update_menu();
 		}
 		if self.select == 1 {
 			self.update_game();
 		}
+	}
+
+	fn update_menu(&mut self){
+		
 	}
 
 	fn update_game(&mut self){
@@ -161,8 +171,26 @@ impl Game {
 		
 		}
 	}
-
+	
 	fn pressed(&mut self, btn :& Button){
+		if self.select == 0 {
+			self.pressed_menu(btn);
+		}
+		if self.select == 1 {
+			self.pressed_game(btn);
+		}
+	}
+	
+	fn pressed_menu(&mut self, btn :& Button){
+		match btn {
+			&Button::Keyboard(Key::Up) 		=> if self.hover > 1 {self.hover -= 1;},
+			&Button::Keyboard(Key::Down)	=> if self.hover < 3 {self.hover += 1;},
+			&Button::Keyboard(Key::Return)	=> self.select = 1,
+			_								=> self.select = 0,
+		}
+	}
+
+	fn pressed_game(&mut self, btn :& Button){
 		let current_direction = self.snake.dir.clone();
 		self.snake.dir = match btn 
 		{
