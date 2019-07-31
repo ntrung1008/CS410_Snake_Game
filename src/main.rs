@@ -27,6 +27,7 @@ pub struct Game
 {
     gl		:GlGraphics,
 	snake	:Snake, 
+	snake2	:Snake,
 	food 	:Food,
 	enemy 	:Enemy,
 	ate_food:bool,
@@ -136,6 +137,7 @@ impl Game {
 		// Render the rest
 		self.food.render(&mut self.gl, args);
 		self.snake.render(&mut self.gl, args);
+		self.snake2.render(&mut self.gl, args);
 		self.enemy.render(&mut self.gl, args);
     }
 
@@ -163,6 +165,17 @@ impl Game {
 		}
 		if self.enemy.kill_snake(&self.snake) == true {
 			self.snake.alive = false;
+		}
+		
+		self.snake2.update(self.ate_food);
+		if self.ate_food == true {
+			let mut rng = rand::thread_rng();
+			self.food = Food{x:rng.gen_range(0,WINDOWSIZE.0/BOXSIZE-1),y:rng.gen_range(0,WINDOWSIZE.1/BOXSIZE-1)};
+			self.score += 1;
+			self.ate_food = false;
+		}
+		if self.enemy.kill_snake(&self.snake2) == true {
+			self.snake2.alive = false;
 		}
 		self.enemy.spawn -= 1;
 		if self.enemy.spawn <= 0 {
@@ -201,6 +214,20 @@ impl Game {
 			&Button::Keyboard(Key::Left)
 				if current_direction != Direction::Right => Direction::Left,
 			&Button::Keyboard(Key::Right)
+				if current_direction != Direction::Left => Direction::Right,
+			_ => current_direction,
+		};
+		
+		let current_direction = self.snake2.dir.clone();
+		self.snake2.dir = match btn 
+		{
+			&Button::Keyboard(Key::W)
+				if current_direction != Direction::Down => Direction::Up, //if the snake is not going down then change it to go up
+			&Button::Keyboard(Key::S)
+				if current_direction != Direction::Up => Direction::Down,
+			&Button::Keyboard(Key::A)
+				if current_direction != Direction::Right => Direction::Left,
+			&Button::Keyboard(Key::D)
 				if current_direction != Direction::Left => Direction::Right,
 			_ => current_direction,
 		};
@@ -340,6 +367,7 @@ fn main() {
 	let mut game= Game {
 		gl:GlGraphics::new(opengl),
 		snake	:Snake{snek: vec![(5,5),(5,6),(6,6),(6,7),(7,7),(8,7),(8,8)], dir: Direction :: Right, alive: true},
+		snake2	:Snake{snek: vec![(10,10),(10,11),(11,11),(11,12),(12,12),(13,12),(13,13)], dir: Direction :: Right, alive: true},
 		food 	:Food {x :rng.gen_range(0, (WINDOWSIZE.0/BOXSIZE)-1), y:rng.gen_range(0, (WINDOWSIZE.1/BOXSIZE)-1)},
 		ate_food:false,
 		score	:0,
