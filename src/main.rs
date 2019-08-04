@@ -43,6 +43,9 @@ impl Game {
 			self.render_menu(glyphs,args);
 		}
 		if self.select == 1 {
+			if self.hover == 1{
+				self.snake2.alive = false;
+			}
 			self.render_game(glyphs,args);
 		}
 	}
@@ -67,7 +70,7 @@ impl Game {
 			// Draw menu options
 			trans = c.transform.trans((WINDOWSIZE.0 as f64 * 0.3) as f64, (WINDOWSIZE.1/6*3) as f64);
 			graphics::text::Text::new(WINDOWSIZE.0/14).draw(
-				"play",
+				"1 Player",
 				glyphs,
 				&c.draw_state,
 				trans,
@@ -75,7 +78,7 @@ impl Game {
 			).unwrap();
 			trans = c.transform.trans((WINDOWSIZE.0 as f64 * 0.3) as f64, (WINDOWSIZE.1/6*4) as f64);
 			graphics::text::Text::new(WINDOWSIZE.0/14).draw(
-				"scores",
+				"2 Player",
 				glyphs,
 				&c.draw_state,
 				trans,
