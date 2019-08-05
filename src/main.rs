@@ -219,19 +219,19 @@ impl Game {
 		}
 	}
 	
-	fn pressed(&mut self, btn :& Button){
+	fn pressed(&mut self, btn :& Button, sta :& ButtonState){
 		if self.select == 0 {
-			self.pressed_menu(btn);
+			self.pressed_menu(btn,sta);
 		}
 		if self.select == 1 {
 			self.pressed_game(btn);
 		}
 	}
 	
-	fn pressed_menu(&mut self, btn :& Button){
+	fn pressed_menu(&mut self, btn :& Button,sta :& ButtonState){
 		match btn {
-			&Button::Keyboard(Key::Up) 		=> if self.hover > 1 {self.hover -= 1;},
-			&Button::Keyboard(Key::Down)	=> if self.hover < 3 {self.hover += 1;},
+			&Button::Keyboard(Key::Up) 		=> if sta == &ButtonState::Press { if self.hover > 1 {self.hover -= 1;}},
+			&Button::Keyboard(Key::Down)	=> if sta == &ButtonState::Press { if self.hover < 3 {self.hover += 1;}},
 			&Button::Keyboard(Key::Return)	=> self.select = 1,
 			_								=> self.select = 0,
 		}
@@ -434,7 +434,7 @@ fn main() {
 	let mut events = Events::new(EventSettings::new()).ups(UPS); //how often to update
     while let Some(e) = events.next(&mut window) {
 		if let Some(key) = e.button_args(){
-			game.pressed(&key.button);
+			game.pressed(&key.button,&key.state);
 		}
 		
         if let Some(_u) = e.update_args() {
