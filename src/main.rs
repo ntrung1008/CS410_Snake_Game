@@ -20,6 +20,21 @@ enum Direction {
     Down,
 }
 
+#[derive(Clone, PartialEq)]
+enum Screen {
+	Menu,
+	Game,
+	Ready,
+	GameOver,
+}
+
+#[derive(Clone, PartialEq)]
+enum MenuOption {
+	OnePlayer,
+	TwoPlayer,
+	Options,
+}
+
 // MAKE SURE WINDOWSIZE IS A MULTIPLE OF BOXSIZE
 static WINDOWSIZE: (u32, u32) = (800, 800);
 static RESPAWN_ENEMY: u32 = 50;
@@ -35,25 +50,30 @@ pub struct Game {
     ate_food: bool,
     score: u32,
     score2: u32,
-    select: u8,
-    hover: u32,
+    screen: Screen,
+    hover: MenuOption,
 }
 
 impl Game {
     fn render(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs) {
-        if self.select == 0 {
+        if self.screen == Screen::Menu {
             self.render_menu(glyphs, args);
         }
-        if self.select == 1 {
-            if self.hover == 1 {
+        if self.screen == Screen::Game {
+            if self.hover == MenuOption::OnePlayer {
                 self.snake2.alive = false;
+            	self.render_game(glyphs, args, MenuOption::OnePlayer);
             }
-            self.render_game(glyphs, args);
+            self.render_game(glyphs, args, MenuOption::TwoPlayer);
         }
     }
 
     fn render_menu(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs) {
-        let hover_copy = self.hover;
+        let hover_offset = match self.hover {
+			MenuOption::OnePlayer => 3,
+			MenuOption::TwoPlayer => 4,
+			MenuOption::Options   => 5,
+		};
         self.gl.draw(args.viewport(), |c, gl| {
             // Clear the screen.
             graphics::clear(graphics::color::WHITE, gl);
@@ -97,37 +117,39 @@ impl Game {
             trans = c.transform;
             let ellip = graphics::rectangle::square(
                 WINDOWSIZE.0 as f64 * 0.3 - 20.0,
-                (WINDOWSIZE.1 / 6 * (hover_copy + 2) - 20) as f64,
+                (WINDOWSIZE.1 / 6 * (hover_offset) - 20) as f64,
                 (BOXSIZE / 2) as f64,
             );
             graphics::ellipse(graphics::color::BLACK, ellip, trans, gl);
         });
     }
 
-    fn render_game(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs) {
+    fn render_game(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs, player_num: MenuOption) {
         // const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
         let score_str = self.score.to_string().into_boxed_str();
-        let score_str2 = self.score2.to_string().into_boxed_str();
+		let score_str2 = self.score2.to_string().into_boxed_str();
 
         self.gl.draw(args.viewport(), |c, gl| {
             // Clear the screen.
             graphics::clear(graphics::color::WHITE, gl);
 
             // Draw the score
-            let trans = c
-                .transform
-                .trans((WINDOWSIZE.0 - 60) as f64, (WINDOWSIZE.1 - 50) as f64);
-            graphics::text::Text::new(20)
-                .draw("SCORE2", glyphs, &c.draw_state, trans, gl)
-                .unwrap();
-
-            let trans2 = c
-                .transform
-                .trans((WINDOWSIZE.0 - 30) as f64, (WINDOWSIZE.1 - 25) as f64);
-            graphics::text::Text::new(20)
-                .draw(&*score_str2, glyphs, &c.draw_state, trans2, gl)
-                .unwrap();
-            let trans3 = c.transform.trans(
+			if player_num == MenuOption::TwoPlayer {
+            	let trans = c
+            	    .transform
+            	    .trans((WINDOWSIZE.0 - 60) as f64, (WINDOWSIZE.1 - 50) as f64);
+            	graphics::text::Text::new(20)
+            	    .draw("SCORE2", glyphs, &c.draw_state, trans, gl)
+            	    .unwrap();
+            	let trans2 = c
+            	    .transform
+            	    .trans((WINDOWSIZE.0 - 30) as f64, (WINDOWSIZE.1 - 25) as f64);
+            	graphics::text::Text::new(20)
+            	    .draw(&*score_str2, glyphs, &c.draw_state, trans2, gl)
+            	    .unwrap();
+			}
+            
+			let trans3 = c.transform.trans(
                 (WINDOWSIZE.0 - WINDOWSIZE.0) as f64,
                 (WINDOWSIZE.1 - 50) as f64,
             );
@@ -156,10 +178,10 @@ impl Game {
     }
 
     fn update(&mut self) {
-        if self.select == 0 {
+        if self.screen == Screen::Menu {
             self.update_menu();
         }
-        if self.select == 1 {
+        if self.screen == Screen::Game {
             self.update_game();
         }
     }
@@ -215,10 +237,10 @@ impl Game {
     }
 
     fn pressed(&mut self, btn: &Button, sta: &ButtonState) {
-        if self.select == 0 {
+        if self.screen == Screen::Menu {
             self.pressed_menu(btn, sta);
         }
-        if self.select == 1 {
+        if self.screen == Screen::Game {
             self.pressed_game(btn);
         }
     }
@@ -227,36 +249,42 @@ impl Game {
         match btn {
             &Button::Keyboard(Key::Up) => {
                 if sta == &ButtonState::Press {
-                    if self.hover > 1 {
-                        self.hover -= 1;
+                    self.hover = match self.hover {
+                        MenuOption::TwoPlayer => MenuOption::OnePlayer,
+						MenuOption::Options   => MenuOption::TwoPlayer,
+						_					  => MenuOption::Options,
                     }
                 }
             }
             &Button::Keyboard(Key::Down) => {
                 if sta == &ButtonState::Press {
-                    if self.hover < 3 {
-                        self.hover += 1;
+                    self.hover = match self.hover {
+                        MenuOption::OnePlayer => MenuOption::TwoPlayer,
+						MenuOption::TwoPlayer => MenuOption::Options,
+						_					  => MenuOption::OnePlayer,
                     }
                 }
             }
-            &Button::Keyboard(Key::Return) => self.select = 1,
-            _ => self.select = 0,
+            &Button::Keyboard(Key::Return) => self.screen = Screen::Game,
+            _ => self.screen = Screen::Menu,
         }
     }
 
     fn pressed_game(&mut self, btn: &Button) {
-        let current_direction2 = self.snake2.dir.clone();
-        self.snake2.dir = match btn {
-            &Button::Keyboard(Key::Up) if current_direction2 != Direction::Down => Direction::Up, //if the snake is not going down then change it to go up
-            &Button::Keyboard(Key::Down) if current_direction2 != Direction::Up => Direction::Down,
-            &Button::Keyboard(Key::Left) if current_direction2 != Direction::Right => {
-                Direction::Left
-            }
-            &Button::Keyboard(Key::Right) if current_direction2 != Direction::Left => {
-                Direction::Right
-            }
-            _ => current_direction2,
-        };
+		if self.hover == MenuOption::TwoPlayer {
+        	let current_direction2 = self.snake2.dir.clone();
+        	self.snake2.dir = match btn {
+        	    &Button::Keyboard(Key::Up) if current_direction2 != Direction::Down => Direction::Up, //if the snake is not going down then change it to go up
+        	    &Button::Keyboard(Key::Down) if current_direction2 != Direction::Up => Direction::Down,
+        	    &Button::Keyboard(Key::Left) if current_direction2 != Direction::Right => {
+        	        Direction::Left
+        	    }
+        	    &Button::Keyboard(Key::Right) if current_direction2 != Direction::Left => {
+        	        Direction::Right
+        	    }
+        	    _ => current_direction2,
+        	};
+		}
 
         let current_direction = self.snake.dir.clone();
         self.snake.dir = match btn {
@@ -454,21 +482,15 @@ fn main() {
     let mut game = Game {
         gl: GlGraphics::new(opengl),
         snake: Snake {
-            snek: vec![(5, 5), (5, 6), (6, 6), (6, 7), (7, 7), (8, 7), (8, 8)],
+            snek: vec![(0,0),(1,0),(2,0)],
             dir: Direction::Right,
             alive: true,
         },
         snake2: Snake {
-            snek: vec![
-                (10, 10),
-                (10, 11),
-                (11, 11),
-                (11, 12),
-                (12, 12),
-                (13, 12),
-                (13, 13),
-            ],
-            dir: Direction::Right,
+            snek: vec![(WINDOWSIZE.0/BOXSIZE-1,WINDOWSIZE.1/BOXSIZE-1),
+						(WINDOWSIZE.0/BOXSIZE-2,WINDOWSIZE.1/BOXSIZE-2),
+						(WINDOWSIZE.0/BOXSIZE-3,WINDOWSIZE.1/BOXSIZE-3)],
+            dir: Direction::Left,
             alive: true,
         },
         food: Food {
@@ -483,8 +505,8 @@ fn main() {
             y: rng.gen_range(0, (WINDOWSIZE.1 / BOXSIZE) - 1),
             spawn: RESPAWN_ENEMY,
         },
-        select: 0,
-        hover: 1,
+        screen: Screen::Menu,
+        hover: MenuOption::OnePlayer,
     };
 
     let mut events = Events::new(EventSettings::new()).ups(UPS); //how often to update
