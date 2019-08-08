@@ -62,9 +62,8 @@ impl Game {
         if self.screen == Screen::Game {
             if self.hover == MenuOption::OnePlayer {
                 self.snake2.alive = false;
-            	self.render_game(glyphs, args, MenuOption::OnePlayer);
             }
-            self.render_game(glyphs, args, MenuOption::TwoPlayer);
+            self.render_game(glyphs, args);
         }
     }
 
@@ -124,8 +123,8 @@ impl Game {
         });
     }
 
-    fn render_game(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs, player_num: MenuOption) {
-        // const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
+    fn render_game(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs) {
+		let player_num = self.hover.clone();
         let score_str = self.score.to_string().into_boxed_str();
 		let score_str2 = self.score2.to_string().into_boxed_str();
 
@@ -133,38 +132,41 @@ impl Game {
             // Clear the screen.
             graphics::clear(graphics::color::WHITE, gl);
 
-            // Draw the score
-			if player_num == MenuOption::TwoPlayer {
-            	let trans = c
-            	    .transform
-            	    .trans((WINDOWSIZE.0 - 60) as f64, (WINDOWSIZE.1 - 50) as f64);
-            	graphics::text::Text::new(20)
-            	    .draw("SCORE2", glyphs, &c.draw_state, trans, gl)
-            	    .unwrap();
-            	let trans2 = c
-            	    .transform
-            	    .trans((WINDOWSIZE.0 - 30) as f64, (WINDOWSIZE.1 - 25) as f64);
-            	graphics::text::Text::new(20)
-            	    .draw(&*score_str2, glyphs, &c.draw_state, trans2, gl)
-            	    .unwrap();
-			}
-            
-			let trans3 = c.transform.trans(
+		   	// Draw P1 score
+			let trans = c.transform.trans(
                 (WINDOWSIZE.0 - WINDOWSIZE.0) as f64,
                 (WINDOWSIZE.1 - 50) as f64,
             );
             graphics::text::Text::new(20)
-                .draw("SCORE", glyphs, &c.draw_state, trans3, gl)
+                .draw("SCORE", glyphs, &c.draw_state, trans, gl)
                 .unwrap();
 
-            let trans4 = c.transform.trans(
+            let trans2 = c.transform.trans(
                 (WINDOWSIZE.0 - WINDOWSIZE.0) as f64,
                 (WINDOWSIZE.1 - 25) as f64,
             );
             graphics::text::Text::new(20)
-                .draw(&*score_str, glyphs, &c.draw_state, trans4, gl)
+                .draw(&*score_str, glyphs, &c.draw_state, trans2, gl)
                 .unwrap();
         });
+        
+		if player_num == MenuOption::TwoPlayer {
+			self.gl.draw(args.viewport(), |c, gl| {
+				// Draw P2 score
+            		let trans = c
+            		    .transform
+            		    .trans((WINDOWSIZE.0 - 60) as f64, (WINDOWSIZE.1 - 50) as f64);
+            		graphics::text::Text::new(20)
+            		    .draw("SCORE2", glyphs, &c.draw_state, trans, gl)
+            		    .unwrap();
+            		let trans2 = c
+            		    .transform
+            		    .trans((WINDOWSIZE.0 - 30) as f64, (WINDOWSIZE.1 - 25) as f64);
+            		graphics::text::Text::new(20)
+            		    .draw(&*score_str2, glyphs, &c.draw_state, trans2, gl)
+            		    .unwrap();
+			});
+        };
 
         // Render the rest
         self.food.render(&mut self.gl, args);
