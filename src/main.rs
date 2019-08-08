@@ -26,6 +26,7 @@ enum Screen {
 	Game,
 	Ready,
 	GameOver,
+	Options,
 }
 
 #[derive(Clone, PartialEq)]
@@ -59,6 +60,9 @@ impl Game {
         if self.screen == Screen::Menu {
             self.render_menu(glyphs, args);
         }
+		if self.screen == Screen::Ready {
+			self.render_ready(glyphs, args);
+		}
         if self.screen == Screen::Game {
             if self.hover == MenuOption::OnePlayer {
                 self.snake2.alive = false;
@@ -67,12 +71,36 @@ impl Game {
         }
     }
 
+	fn render_ready(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs) {
+        self.gl.draw(args.viewport(), |c, gl| {
+            // Clear the screen.
+            graphics::clear(graphics::color::WHITE, gl);
+
+            // Draw the title
+            let mut trans = c
+                .transform
+                .trans((WINDOWSIZE.0 / 4) as f64, (WINDOWSIZE.1 / 3) as f64);
+            graphics::text::Text::new(WINDOWSIZE.0 / 4)
+                .draw("READY?", glyphs, &c.draw_state, trans, gl)
+                .unwrap();
+            
+			trans = c
+                .transform
+                .trans((WINDOWSIZE.0 / 5) as f64, (WINDOWSIZE.1 / 3 * 2) as f64);
+            graphics::text::Text::new(WINDOWSIZE.0 / 15)
+                .draw("press r...", glyphs, &c.draw_state, trans, gl)
+                .unwrap();
+        });
+	}
+
     fn render_menu(&mut self, glyphs: &mut GlyphCache<'static>, args: &RenderArgs) {
+		// Offset calculation to show which menu option we are hovering
         let hover_offset = match self.hover {
 			MenuOption::OnePlayer => 3,
 			MenuOption::TwoPlayer => 4,
 			MenuOption::Options   => 5,
 		};
+
         self.gl.draw(args.viewport(), |c, gl| {
             // Clear the screen.
             graphics::clear(graphics::color::WHITE, gl);
@@ -149,10 +177,10 @@ impl Game {
                 .draw(&*score_str, glyphs, &c.draw_state, trans2, gl)
                 .unwrap();
         });
-        
+
+		// Draw P2 score
 		if player_num == MenuOption::TwoPlayer {
 			self.gl.draw(args.viewport(), |c, gl| {
-				// Draw P2 score
             		let trans = c
             		    .transform
             		    .trans((WINDOWSIZE.0 - 60) as f64, (WINDOWSIZE.1 - 50) as f64);
@@ -183,12 +211,17 @@ impl Game {
         if self.screen == Screen::Menu {
             self.update_menu();
         }
+		if self.screen == Screen::Ready {
+			self.update_ready();
+		}
         if self.screen == Screen::Game {
             self.update_game();
         }
     }
+    
+	fn update_menu(&mut self) {}
 
-    fn update_menu(&mut self) {}
+    fn update_ready(&mut self) {}
 
     fn update_game(&mut self) {
         //Snake 1
@@ -242,6 +275,9 @@ impl Game {
         if self.screen == Screen::Menu {
             self.pressed_menu(btn, sta);
         }
+        if self.screen == Screen::Ready {
+            self.pressed_ready(btn, sta);
+        }
         if self.screen == Screen::Game {
             self.pressed_game(btn);
         }
@@ -267,10 +303,27 @@ impl Game {
                     }
                 }
             }
-            &Button::Keyboard(Key::Return) => self.screen = Screen::Game,
-            _ => self.screen = Screen::Menu,
+            &Button::Keyboard(Key::Return) => { 
+				self.screen = match self.hover {
+					MenuOption::Options => Screen::Options,
+            		_ 					=> Screen::Ready,
+				}
+			}
+			_ => (),
         }
     }
+
+	fn pressed_ready(&mut self, btn: &Button, sta: &ButtonState) {
+		match btn {
+			&Button::Keyboard(Key::R) => {
+				if sta == &ButtonState::Press {
+					self.screen = Screen::Game;
+				}
+			}
+			_ => (),
+		}
+		println!("im readu");
+	}
 
     fn pressed_game(&mut self, btn: &Button) {
 		if self.hover == MenuOption::TwoPlayer {
