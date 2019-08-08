@@ -468,7 +468,7 @@ fn main() {
     let mut window: Window = WindowSettings::new("Snake", WINDOWSIZE)
         .graphics_api(opengl)
         .exit_on_esc(true)
-        .fullscreen(true)
+        .fullscreen(false)
         .build()
         .unwrap();
 
